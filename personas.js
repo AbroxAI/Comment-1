@@ -1,55 +1,42 @@
 // personas.js
 // -----------------------------
-// Synthetic personas pool with realism
+// Defines admin and synthetic personas
 // -----------------------------
 
 const Personas = (() => {
 
-    // Fixed admin persona
     const admin = {
         name: "Profit Hunter 🌐",
-        avatar: "static/admin.jpg", // your fixed admin avatar
+        avatar: "static/admin.jpg", // fixed admin image
         isAdmin: true
     };
 
-    // Avatar sources for variety
-    const AVATAR_SOURCES = [
-        "https://i.pravatar.cc/150?img=",
-        "https://api.dicebear.com/6.x/avataaars/svg?seed=",
-        "https://api.multiavatar.com/"
+    // Synthetic persona pool
+    const syntheticPool = [
+        { name: "Alice 🌸", avatar: "static/avatars/avatar1.png", isAdmin: false },
+        { name: "Bob", avatar: "static/avatars/avatar2.png", isAdmin: false },
+        { name: "Charlie 😎", avatar: "static/avatars/avatar3.png", isAdmin: false },
+        { name: "Diana", avatar: "static/avatars/avatar4.png", isAdmin: false },
+        { name: "Eve 💰", avatar: "static/avatars/avatar5.png", isAdmin: false },
+        { name: "Frank", avatar: "static/avatars/avatar6.png", isAdmin: false },
+        { name: "Gina 🐱", avatar: "static/avatars/avatar7.png", isAdmin: false },
+        { name: "Harry", avatar: "static/avatars/avatar8.png", isAdmin: false },
+        { name: "Ivy 🍀", avatar: "static/avatars/avatar9.png", isAdmin: false },
+        { name: "Jack", avatar: "static/avatars/avatar10.png", isAdmin: false },
+        // expand pool as needed
     ];
 
-    // Name pool (mixed genders, global, emojis, typos)
-    const NAME_POOL = [
-        "Alice 🌸","Bob","Charlie 😎","Diana","Eve 💰","Frank","Gina 🐱",
-        "Harry","Ivy 🍀","Jack","Liam","Mia","Noah","Olivia","Sophia","Lucas","Emma","Max","Zoe","Leo"
-    ];
-
-    // Generate synthetic persona with unique avatar per post
-    function generateSyntheticPersona(postId, usedPersonas) {
-        let name, avatar;
-
-        do {
-            name = NAME_POOL[Math.floor(Math.random() * NAME_POOL.length)];
-
-            // Add random suffix for realism
-            const suffixes = ["", " 💸", " 🌟", "🔥", "💯", "✨", "💀", "😎"];
-            name += suffixes[Math.floor(Math.random() * suffixes.length)];
-
-            // Random avatar source
-            const src = AVATAR_SOURCES[Math.floor(Math.random() * AVATAR_SOURCES.length)];
-            avatar = src + Math.floor(Math.random() * 1000);
-
-        } while (usedPersonas.has(name + avatar)); // avoid duplicates
-
-        usedPersonas.add(name + avatar);
-
-        return { name, avatar, isAdmin: false };
+    function getRandom() {
+        // 1% chance for admin to appear automatically
+        if (Math.random() < 0.01) return admin;
+        const idx = Math.floor(Math.random() * syntheticPool.length);
+        return syntheticPool[idx];
     }
 
     return {
         admin,
-        generateSyntheticPersona
+        getRandom,
+        pool: syntheticPool
     };
 
 })();
