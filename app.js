@@ -1,54 +1,60 @@
 // app.js
 // -----------------------------
-// Connects engines, observers, and post-specific logic
+// Global application controller
+// Initializes all modules per post
 // -----------------------------
 
 const App = (() => {
 
-    let commentsContainer, commentCounterEl;
-    const postId = "post-" + Date.now(); // unique per page load
+    const posts = []; // in case multiple posts on page
+    let postId = "post_" + Date.now(); // unique ID per page load
 
     function init() {
-        commentsContainer = document.getElementById("tg-comments-container");
-        commentCounterEl = document.getElementById("tg-comment-count");
 
-        if (!commentsContainer) return console.warn("Comments container not found.");
+        const container = document.getElementById("tg-comments-container");
+        const commentCounterEl = document.getElementById("tg-comment-count");
 
-        initInteractions();
-        initRealism();
-        observeNewComments();
-    }
+        if (!container) {
+            console.warn("Comments container not found.");
+            return;
+        }
 
-    function initInteractions() {
+        const input = document.getElementById("tg-comment-input");
+        const sendBtn = document.getElementById("tg-send-btn");
+        const rightButtons = document.querySelector(".tg-right-buttons");
+        const emojiBtn = document.querySelector('.tg-icon-btn[data-type="emoji"]');
+
+        // Initialize user interactions
         Interactions.init({
-            container: commentsContainer,
-            input: document.getElementById("tg-comment-input"),
-            sendBtn: document.getElementById("tg-send-btn"),
-            rightButtons: document.querySelector(".tg-right-buttons"),
-            emojiBtn: document.querySelector('.tg-icon-btn[data-type="emoji"]'),
+            container,
+            input,
+            sendBtn,
+            rightButtons,
+            emojiBtn,
             postId
         });
-    }
 
-    function initRealism() {
-        // Start synthetic comments with random initial count
-        const initialCount = Math.floor(Math.random() * 20) + 15; // 15–35 comments
-        RealismEngine.start(postId, commentsContainer, initialCount);
-    }
+        // Initialize synthetic realism engine
+        RealismEngine.start(container, postId);
 
-    function observeNewComments() {
-        const observer = new MutationObserver(() => updateCommentCount());
-        observer.observe(commentsContainer, { childList: true });
-        updateCommentCount();
-    }
+        // Observe new comments for counter
+        const observer = new MutationObserver(() => {
+            commentCounterEl.textContent = container.children.length;
+        });
 
-    function updateCommentCount() {
-        const count = commentsContainer.children.length;
-        if (commentCounterEl) commentCounterEl.textContent = count + " comments";
+        observer.observe(container, { childList: true });
+        commentCounterEl.textContent = container.children.length;
+
+        // Set placeholder post title from Telegram post (can be dynamic)
+        const postTitleEl = document.getElementById("tg-post-title");
+        postTitleEl.textContent = "Abrox AI Bot Discussion"; // example
     }
 
     return { init };
 
 })();
 
-document.addEventListener("DOMContentLoaded", () => App.init());
+// Boot application
+document.addEventListener("DOMContentLoaded", () => {
+    App.init();
+});
