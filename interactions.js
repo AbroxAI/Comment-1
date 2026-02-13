@@ -1,8 +1,10 @@
 // interactions.js
-// -----------------------------
-// Handles real user input + media/send toggle
-// Modular: works with BubbleRenderer and RealismEngine
-// -----------------------------
+// -------------------------------------------------
+// Handles user interactions
+// - Input behavior
+// - Media ↔ Send toggle
+// - Sending real user messages
+// -------------------------------------------------
 
 const Interactions = (() => {
 
@@ -11,7 +13,6 @@ const Interactions = (() => {
     let sendBtn;
     let rightButtons;
     let emojiBtn;
-    let postId;
 
     function init(config) {
         container = config.container;
@@ -19,7 +20,6 @@ const Interactions = (() => {
         sendBtn = config.sendBtn;
         rightButtons = config.rightButtons;
         emojiBtn = config.emojiBtn;
-        postId = config.postId; // link to current post
 
         if (!container || !input || !sendBtn || !rightButtons) {
             console.warn("Interactions not initialized properly.");
@@ -31,7 +31,7 @@ const Interactions = (() => {
         bindMediaButtons();
     }
 
-    // Toggle between media buttons and send
+    // Toggle media ↔ send
     function bindInputToggle() {
         input.addEventListener("input", toggleButtons);
         toggleButtons(); // initial state
@@ -47,9 +47,8 @@ const Interactions = (() => {
         }
     }
 
-    // Handle sending messages
+    // Send user message
     function bindSendBehavior() {
-
         sendBtn.addEventListener("click", sendMessage);
 
         input.addEventListener("keydown", (e) => {
@@ -66,7 +65,6 @@ const Interactions = (() => {
         const text = input.value.trim();
         if (!text) return;
 
-        // Real user persona
         const userPersona = {
             name: "You",
             avatar: "static/real-user.png",
@@ -74,14 +72,6 @@ const Interactions = (() => {
         };
 
         BubbleRenderer.render(userPersona, text, container);
-
-        // Optionally, trigger admin reply if question detected
-        if (/(\?|\bhow\b|\bwhat\b|\bwhen\b)/i.test(text)) {
-            setTimeout(() => {
-                const admin = IdentityEngine.getPersona(postId, "admin");
-                BubbleRenderer.render(admin, "Thanks for your question! Let me clarify 👀", container, { reply: true });
-            }, 1500 + Math.random() * 2000); // random delay 1.5–3.5s
-        }
 
         resetInput();
     }
@@ -92,9 +82,8 @@ const Interactions = (() => {
         input.focus();
     }
 
-    // Media + emoji buttons (stubbed)
+    // Media + Emoji buttons (hooks for future features)
     function bindMediaButtons() {
-
         if (emojiBtn) {
             emojiBtn.addEventListener("click", () => {
                 console.log("Emoji picker triggered");
@@ -103,11 +92,14 @@ const Interactions = (() => {
 
         rightButtons.querySelectorAll(".tg-icon-btn").forEach(btn => {
             btn.addEventListener("click", () => {
-                console.log(`${btn.getAttribute("aria-label")} clicked`);
+                const type = btn.getAttribute("aria-label");
+                console.log(`${type} clicked`);
             });
         });
     }
 
-    return { init };
+    return {
+        init
+    };
 
 })();
