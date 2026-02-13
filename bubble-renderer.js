@@ -1,77 +1,82 @@
 // bubble-renderer.js
 // ============================================================
-// BUBBLE RENDERER
-// Renders comment bubbles for admin, user, and synthetic personas
-// Syncs with identity-personas.js & interactions.js
+// BUBBLE RENDERER v1
+// Renders Telegram-style comment bubbles
+// Fully synced with identity-personas.js
 // ============================================================
 
-const tgCommentsContainer = document.getElementById("tg-comments-container");
+const commentsContainer = document.getElementById("tg-comments-container");
 
-/**
- * Renders a comment bubble
- * @param {Object} persona - persona object {name, avatar, isAdmin, ...}
- * @param {string} text - comment text
- * @param {Date} timestamp - comment timestamp
- * @param {boolean} isUser - true if from current user
- */
-function renderBubble(persona, text, timestamp = new Date(), isUser = false) {
-    const commentWrapper = document.createElement("div");
-    commentWrapper.classList.add("tg-comment");
+// Render a single comment bubble
+function renderBubble(persona, text, timestamp = new Date(), isAdmin = false) {
+    if (!persona || !text) return;
+
+    // Bubble wrapper
+    const commentElem = document.createElement("div");
+    commentElem.className = "tg-comment";
 
     // Avatar
-    const avatarImg = document.createElement("img");
-    avatarImg.src = persona.avatar || "assets/default-avatar.jpg";
-    avatarImg.alt = persona.name;
-    avatarImg.classList.add("tg-comment-avatar");
+    const avatar = document.createElement("img");
+    avatar.className = "tg-comment-avatar";
+    avatar.src = persona.avatar || "assets/default-avatar.png";
+    avatar.alt = persona.name;
 
     // Bubble
     const bubble = document.createElement("div");
-    bubble.classList.add("tg-bubble");
-    if (persona.isAdmin) bubble.classList.add("admin");
-    if (isUser) bubble.classList.add("admin"); // user bubble styled like admin
+    bubble.className = "tg-bubble" + (isAdmin ? " admin" : "");
 
     // Name
-    const nameSpan = document.createElement("div");
-    nameSpan.classList.add("tg-bubble-name");
-    nameSpan.textContent = persona.name;
+    const nameElem = document.createElement("div");
+    nameElem.className = "tg-bubble-name";
+    nameElem.textContent = persona.name;
 
     // Text
-    const textSpan = document.createElement("div");
-    textSpan.classList.add("tg-bubble-text");
-    textSpan.textContent = text;
+    const textElem = document.createElement("div");
+    textElem.className = "tg-bubble-text";
+    textElem.textContent = text;
 
     // Timestamp
-    const timeSpan = document.createElement("div");
-    timeSpan.classList.add("tg-bubble-time");
-    timeSpan.textContent = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeElem = document.createElement("div");
+    timeElem.className = "tg-bubble-time";
+    timeElem.textContent = formatTime(timestamp);
 
-    bubble.appendChild(nameSpan);
-    bubble.appendChild(textSpan);
-    bubble.appendChild(timeSpan);
+    // Compose bubble
+    bubble.appendChild(nameElem);
+    bubble.appendChild(textElem);
+    bubble.appendChild(timeElem);
 
-    if (isUser) {
-        commentWrapper.style.flexDirection = "row-reverse";
-    }
+    // Compose comment
+    commentElem.appendChild(avatar);
+    commentElem.appendChild(bubble);
 
-    commentWrapper.appendChild(avatarImg);
-    commentWrapper.appendChild(bubble);
+    // Append to container
+    commentsContainer.appendChild(commentElem);
 
-    tgCommentsContainer.appendChild(commentWrapper);
-
-    // Animate in
-    setTimeout(() => {
-        commentWrapper.style.opacity = 1;
-        commentWrapper.style.transform = "translateY(0)";
-    }, 50);
+    // Scroll to bottom smoothly
+    commentsContainer.scrollTo({ top: commentsContainer.scrollHeight, behavior: "smooth" });
 }
 
-/**
- * Generates a synthetic persona comment
- * Optionally used by realism engine
- */
-function generateLiveComment(baseText = "Interesting move") {
-    const persona = getRandomPersona();
-    const text = generateHumanComment(persona, baseText);
-    const timestamp = generateTimestamp();
-    renderBubble(persona, text, timestamp, false);
+// Format timestamp nicely
+function formatTime(date) {
+    const now = new Date();
+    const diff = now - new Date(date);
+
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff/60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff/3600000)} hr ago`;
+    const d = new Date(date);
+    return `${d.getHours()}:${d.getMinutes().toString().padStart(2,"0")} ${d.getDate()}/${d.getMonth()+1}`;
 }
+
+// Render multiple comments (used for crowd reactions)
+function renderCommentsBatch(comments) {
+    if (!Array.isArray(comments)) return;
+    comments.forEach(c => {
+        const persona = getPersona(); // synthetic persona
+        renderBubble(persona, c, generateTimestamp(), false);
+    });
+}
+
+// Expose functions globally for interactions.js
+window.renderBubble = renderBubble;
+window.renderCommentsBatch = renderCommentsBatch;
