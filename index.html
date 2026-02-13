@@ -10,64 +10,44 @@
 
 <div id="tg-comments-app">
 
-    <!-- Background Layer -->
+    <!-- Background -->
     <div class="tg-bg-layer"></div>
 
     <!-- Header -->
     <div class="tg-header">
-        <!-- Back Arrow -->
-        <button class="tg-back-btn" aria-label="Back">
-            <i data-lucide="arrow-left"></i>
-        </button>
-
-        <!-- Post Title / Discussion -->
-        <div class="tg-title" id="tg-post-title">Loading...</div>
-
-        <!-- Comment Count -->
+        <button class="tg-back-btn" aria-label="Back"><i data-lucide="arrow-left"></i></button>
         <span class="tg-comment-count" id="tg-comment-count">0 comments</span>
+        <div class="tg-title" id="tg-post-title">Loading...</div>
     </div>
 
-    <!-- Scrollable Comments Container -->
+    <!-- Scrollable comments -->
     <div id="tg-comments-container"></div>
 
-    <!-- New Comments Indicator -->
+    <!-- New comments indicator -->
     <div id="tg-new-comments" class="hidden">↓ New comments</div>
 
-    <!-- Floating Input Bar -->
+    <!-- Input bar -->
     <div class="tg-input-wrapper">
         <div class="tg-input-bar">
-            <!-- Left: Emoji -->
-            <button class="tg-icon-btn" data-type="emoji" aria-label="Emoji picker">
-                <i data-lucide="smile"></i>
-            </button>
-
-            <!-- Input Field -->
-            <input type="text" id="tg-comment-input" placeholder="Write a comment..." autocomplete="off">
-
-            <!-- Send arrow -->
-            <button id="tg-send-btn" class="tg-send-btn" aria-label="Send message">
-                <i data-lucide="send"></i>
-            </button>
-
-            <!-- Right: Media / Camera -->
+            <button class="tg-icon-btn" data-type="emoji"><i data-lucide="smile"></i></button>
+            <input type="text" id="tg-comment-input" placeholder="Write a comment...">
+            <button id="tg-send-btn" class="tg-send-btn"><i data-lucide="send"></i></button>
             <div class="tg-right-buttons">
-                <button class="tg-icon-btn" data-type="media" aria-label="Upload media">
-                    <i data-lucide="camera"></i>
-                </button>
-                <button class="tg-icon-btn" data-type="other-media" aria-label="Other media">
-                    <i data-lucide="image"></i>
-                </button>
+                <button class="tg-icon-btn" data-type="media"><i data-lucide="camera"></i></button>
+                <button class="tg-icon-btn" data-type="other-media"><i data-lucide="image"></i></button>
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- Lucide Icons -->
+<!-- Lucide icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
-<script>lucide.createIcons();</script>
+<script>
+lucide.createIcons();
+</script>
 
-<!-- Modular Scripts -->
+<!-- Modular scripts -->
 <script src="personas.js"></script>
 <script src="identity-engine.js"></script>
 <script src="bubble-renderer.js"></script>
