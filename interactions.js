@@ -1,99 +1,62 @@
 // interactions.js
 // ============================================================
-// INTERACTIONS MODULE
-// Handles user input, sending comments, notifications
-// Synced with identity-personas.js & realism-engine.js
+// USER INTERACTIONS v1
+// Handles user input, send button, and emoji/media actions
+// Integrated with identity-personas.js, bubble-renderer.js, and realism-engine.js
 // ============================================================
 
-const tgInput = document.getElementById("tg-comment-input");
-const tgSendBtn = document.getElementById("tg-send-btn");
-const tgCommentsContainer = document.getElementById("tg-comments-container");
-const tgCommentCount = document.getElementById("tg-comment-count");
-const tgNewComments = document.getElementById("tg-new-comments");
+const commentInput = document.getElementById("tg-comment-input");
+const sendBtn = document.getElementById("tg-send-btn");
+const commentsContainer = document.getElementById("tg-comments-container");
+const commentCountElem = document.getElementById("tg-comment-count");
 
-let userHasScrolled = false;
-
-// ================= INPUT FIELD EVENTS =================
-tgInput.addEventListener("input", () => {
-    tgSendBtn.style.display = tgInput.value.trim() ? "flex" : "none";
-});
-
-// Send comment on button click
-tgSendBtn.addEventListener("click", () => sendUserComment());
-
-// Send comment on Enter key
-tgInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter" && tgInput.value.trim()) {
-        e.preventDefault();
-        sendUserComment();
+// Show/hide send button based on input
+commentInput.addEventListener("input", () => {
+    if (commentInput.value.trim().length > 0) {
+        sendBtn.style.display = "flex";
+    } else {
+        sendBtn.style.display = "none";
     }
 });
 
-// ================= SEND USER COMMENT =================
-function sendUserComment() {
-    const text = tgInput.value.trim();
+// Send user comment
+sendBtn.addEventListener("click", () => {
+    const text = commentInput.value.trim();
     if (!text) return;
 
-    const userPersona = {
-        name: "You",
-        avatar: "assets/user-avatar.jpg",
-        isAdmin: false,
-        gender: "male",
-        country: "GLOBAL",
-        region: "western",
-        tone: "normal",
-        memory: []
-    };
+    const userPersona = getPersona({type:"admin"}); // Admin posting
+    const timestamp = generateTimestamp();
 
-    const timestamp = new Date();
-    renderBubble(userPersona, text, timestamp, true);
+    renderBubble(userPersona, text, timestamp, true); // true = admin bubble
+    commentInput.value = "";
+    sendBtn.style.display = "none";
+    updateCommentCount();
 
-    // Clear input
-    tgInput.value = "";
-    tgSendBtn.style.display = "none";
+    // Trigger crowd reaction to this comment
+    triggerTrendingReaction(text);
+});
 
-    // Scroll to bottom
-    scrollToBottom();
-
-    // Optionally trigger realism replies
-    generateLiveComment();
+// Utility: Update comment count
+function updateCommentCount() {
+    const count = commentsContainer.querySelectorAll(".tg-comment").length;
+    commentCountElem.innerHTML = `<strong>${count} comments</strong>`;
 }
 
-// ================= SCROLL HANDLING =================
-tgCommentsContainer.addEventListener("scroll", () => {
-    const atBottom = tgCommentsContainer.scrollHeight - tgCommentsContainer.scrollTop === tgCommentsContainer.clientHeight;
-    if (atBottom) {
-        userHasScrolled = false;
-        tgNewComments.classList.add("hidden");
-    } else {
-        userHasScrolled = true;
+// Optional: handle Enter key
+commentInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendBtn.click();
     }
 });
 
-tgNewComments.addEventListener("click", () => scrollToBottom());
+// Optional: emoji/media buttons (can expand later)
+document.querySelectorAll(".tg-icon-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const type = btn.getAttribute("data-type");
+        alert(`Feature '${type}' clicked! (expand later)`); // placeholder
+    });
+});
 
-function scrollToBottom() {
-    tgCommentsContainer.scrollTo({ top: tgCommentsContainer.scrollHeight, behavior: "smooth" });
-    userHasScrolled = false;
-    tgNewComments.classList.add("hidden");
-}
-
-// ================= COMMENT COUNT =================
-function updateCommentCount() {
-    const count = tgCommentsContainer.querySelectorAll(".tg-comment").length;
-    tgCommentCount.innerHTML = `<strong>${count} comments</strong>`;
-}
-
-// ================= OVERRIDE renderBubble =================
-// Wrap the original renderBubble to handle notifications & count
-const originalRenderBubble = window.renderBubble;
-window.renderBubble = function(persona, text, timestamp, isUser=false) {
-    originalRenderBubble(persona, text, timestamp, isUser);
-    updateCommentCount();
-
-    if (userHasScrolled && !isUser) {
-        tgNewComments.classList.remove("hidden");
-    } else {
-        scrollToBottom();
-    }
-};
+// Scroll container to bottom on load
+commentsContainer.scrollTop = commentsContainer.scrollHeight;
