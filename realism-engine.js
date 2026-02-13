@@ -1,14 +1,18 @@
 // realism-engine.js
-// -----------------------------
-// Controls synthetic activity + realism
-// Per-post unique personas, progressive injection, admin Q&A
-// -----------------------------
+// -------------------------------------------------
+// Controls synthetic activity timing + realism
+// Requires:
+// - identity-engine.js
+// - bubble-renderer.js
+// -------------------------------------------------
 
 const RealismEngine = (() => {
 
-    const postData = {}; // store state per post
+    let container = null;
+    let intervalId = null;
+    let postId = null;
 
-    // Large pool of realistic messages
+    // Realistic message pool
     const messagePool = [
         "Wow this is solid 🔥",
         "Can someone explain this better?",
@@ -27,96 +31,80 @@ const RealismEngine = (() => {
         "This helped a lot thanks",
         "Risky but smart",
         "Let’s see how it plays out",
-        "Admin was right again 👀",
         "Timing was perfect",
-        "Any tips for beginners?"
+        "Watching closely"
     ];
 
     /**
      * Start synthetic activity for a post
-     * @param {HTMLElement} container
-     * @param {String} postId
-     * @param {Number} preloadCount - optional initial comment count
+     * @param {HTMLElement} targetContainer
+     * @param {String} id - postId
      */
-    function start(container, postId, preloadCount = null) {
+    function start(targetContainer, id) {
+        if (!targetContainer || !id) return;
+
+        container = targetContainer;
+        postId = id;
+
+        stop(); // clear previous intervals if any
+
+        intervalId = setInterval(generateActivity, randomInterval());
+    }
+
+    /**
+     * Stop activity
+     */
+    function stop() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+
+    /**
+     * Generate one realistic comment
+     */
+    function generateActivity() {
         if (!container || !postId) return;
 
-        if (!postData[postId]) {
-            postData[postId] = {
-                usedMessages: new Set(),
-                intervalId: null,
-                container
-            };
-        }
+        const shouldAdminReply = Math.random() < 0.05; // admin replies occasionally
 
-        // Preload realistic comments
-        const initialCount = preloadCount || randomInt(10, 35);
-        for (let i = 0; i < initialCount; i++) {
-            generateComment(postId);
-        }
+        const persona = shouldAdminReply
+            ? getPersona({ type: "admin" })
+            : getPersona({ type: "synthetic", postId });
 
-        // Start interval for progressive comments
-        scheduleNext(postId);
+        // Random message, possibly with typos
+        let message = messagePool[Math.floor(Math.random() * messagePool.length)];
+        if (Math.random() < 0.1) message = introduceTypos(message);
+
+        BubbleRenderer.render(persona, message, container);
+
+        // Restart interval with new random timing
+        clearInterval(intervalId);
+        intervalId = setInterval(generateActivity, randomInterval());
     }
 
     /**
-     * Stop synthetic activity for a post
+     * Random interval 6–18 sec
      */
-    function stop(postId) {
-        if (postData[postId] && postData[postId].intervalId) {
-            clearTimeout(postData[postId].intervalId);
-            postData[postId].intervalId = null;
-        }
+    function randomInterval() {
+        return Math.floor(Math.random() * 12000) + 6000;
     }
 
     /**
-     * Generate a single realistic comment
+     * Introduce minor typos for realism
      */
-    function generateComment(postId) {
-        const data = postData[postId];
-        if (!data) return;
-
-        const isAdminReply = Math.random() < 0.08; // 8% chance admin replies
-        let personaType = isAdminReply ? "admin" : "synthetic";
-
-        const persona = IdentityEngine.getPersona(postId, personaType);
-
-        // Pick a unique message
-        let message;
-        let attempts = 0;
-        do {
-            message = messagePool[randomInt(0, messagePool.length - 1)];
-            attempts++;
-        } while (data.usedMessages.has(message) && attempts < 20);
-        data.usedMessages.add(message);
-
-        // Admin only replies if Q&A needed
-        const replyOptions = isAdminReply ? { reply: true } : {};
-
-        BubbleRenderer.render(persona, message, data.container, replyOptions);
+    function introduceTypos(text) {
+        const chars = text.split('');
+        if (chars.length < 3) return text;
+        const idx = Math.floor(Math.random() * chars.length);
+        chars[idx] = String.fromCharCode(chars[idx].charCodeAt(0) + 1);
+        return chars.join('');
     }
 
-    /**
-     * Schedule next synthetic comment
-     */
-    function scheduleNext(postId) {
-        const data = postData[postId];
-        if (!data) return;
-
-        const delay = randomInt(6000, 18000); // 6–18s
-        data.intervalId = setTimeout(() => {
-            generateComment(postId);
-            scheduleNext(postId);
-        }, delay);
-    }
-
-    /**
-     * Random integer helper
-     */
-    function randomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    return { start, stop };
+    return {
+        start,
+        stop
+    };
 
 })();
