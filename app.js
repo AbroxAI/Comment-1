@@ -1,89 +1,112 @@
 // app.js
-// -------------------------------------------------
-// Global application controller
-// Connects all engines together
-// -------------------------------------------------
+// ============================================================
+// ABROX COMMUNITY MAIN CONTROLLER
+// Connects:
+// - identity-personas.js
+// - bubble-renderer.js
+// - realism-engine-v11.js
+// Controls boot, reactions, duplicate safety, interaction
+// ============================================================
 
-const App = (() => {
+// ======== GLOBAL COMMUNITY STATE ========
+const COMMUNITY_STATE = {
+    initialized: false,
+    totalRendered: 0,
+    maxVisibleBubbles: 120, // prevent DOM overload
+    postHistory: new Map()  // postId => Set(replies)
+};
 
-    let commentsContainer;
-    let commentCounterEl;
-    let postId = null; // current post ID
-    let commentCount = 0;
+// ======== DUPLICATE GUARD PER POST ========
+function isDuplicate(postId, text) {
+    if (!COMMUNITY_STATE.postHistory.has(postId)) {
+        COMMUNITY_STATE.postHistory.set(postId, new Set());
+    }
 
-    function init(config = {}) {
-        commentsContainer = document.getElementById("tg-comments-container");
-        commentCounterEl = document.getElementById("tg-comment-count");
-        postId = config.postId || "default-post";
+    const replies = COMMUNITY_STATE.postHistory.get(postId);
 
-        if (!commentsContainer) {
-            console.warn("Comments container not found.");
-            return;
+    if (replies.has(text)) {
+        return true;
+    }
+
+    replies.add(text);
+    return false;
+}
+
+window.isDuplicate = isDuplicate;
+
+// ======== BUBBLE RENDER HOOK ========
+const originalRenderBubble = window.renderBubble;
+
+window.renderBubble = function(persona, text, timestamp, isOwn = false) {
+    if (!persona || !text) return;
+
+    // Call original renderer
+    originalRenderBubble(persona, text, timestamp, isOwn);
+
+    COMMUNITY_STATE.totalRendered++;
+
+    // Limit total visible bubbles to prevent lag
+    const container = document.querySelector("#chat-container");
+    if (container && container.children.length > COMMUNITY_STATE.maxVisibleBubbles) {
+        container.removeChild(container.firstChild);
+    }
+
+    // Randomly trigger organic reaction (not every time)
+    if (Math.random() < 0.18) {
+        if (window.triggerTrendingReactionV11) {
+            window.triggerTrendingReactionV11(text);
         }
+    }
+};
 
-        initInteractions();
-        initRealism();
+// ======== COMMUNITY BOOT SEQUENCE ========
+function bootCommunity() {
+    if (COMMUNITY_STATE.initialized) return;
 
-        observeNewComments();
-        renderPostHeader(config.postTitle || "Loading...");
+    console.log("🚀 Booting Abrox Binary Options Community...");
+
+    // Initial organic spread
+    if (window.postFromPoolV11) {
+        window.postFromPoolV11(35);
     }
 
-    // -----------------------------------------
-    // Initialize user interactions
-    // -----------------------------------------
-    function initInteractions() {
-        Interactions.init({
-            container: commentsContainer,
-            input: document.getElementById("tg-comment-input"),
-            sendBtn: document.getElementById("tg-send-btn"),
-            rightButtons: document.querySelector(".tg-right-buttons"),
-            emojiBtn: document.querySelector('.tg-icon-btn[data-type="emoji"]')
-        });
+    // Start continuous chatter
+    if (window.simulateRandomCrowdV11) {
+        window.simulateRandomCrowdV11(7000);
     }
 
-    // -----------------------------------------
-    // Initialize synthetic realism engine
-    // -----------------------------------------
-    function initRealism() {
-        if (typeof RealismEngine !== "undefined") {
-            RealismEngine.start(commentsContainer, postId);
-        }
-    }
+    COMMUNITY_STATE.initialized = true;
+}
 
-    // -----------------------------------------
-    // Auto comment counter observer
-    // -----------------------------------------
-    function observeNewComments() {
-        const observer = new MutationObserver(() => updateCommentCount());
-        observer.observe(commentsContainer, { childList: true });
-        updateCommentCount();
-    }
+window.bootCommunity = bootCommunity;
 
-    function updateCommentCount() {
-        commentCount = commentsContainer.children.length;
-        if (commentCounterEl) commentCounterEl.textContent = commentCount + " comments";
-    }
+// ======== USER MESSAGE HANDLER ========
+function handleUserMessage(inputText) {
+    if (!inputText || !inputText.trim()) return;
 
-    // -----------------------------------------
-    // Render Post Header / Discussion title
-    // -----------------------------------------
-    function renderPostHeader(title) {
-        const titleEl = document.getElementById("tg-post-title");
-        if (titleEl) titleEl.textContent = title;
-    }
-
-    return {
-        init
+    const persona = {
+        name: "You",
+        avatar: "🧑‍💻",
+        region: "global"
     };
 
-})();
+    const timestamp = generateTimestamp();
 
-// -----------------------------------------
-// Boot Application
-// -----------------------------------------
+    window.renderBubble(persona, inputText.trim(), timestamp, true);
+
+    // Community reacts to user
+    setTimeout(() => {
+        if (window.triggerTrendingReactionV11) {
+            window.triggerTrendingReactionV11(inputText);
+        }
+    }, 1200 + Math.random() * 1500);
+}
+
+window.handleUserMessage = handleUserMessage;
+
+// ======== AUTO START AFTER DOM LOAD ========
 document.addEventListener("DOMContentLoaded", () => {
-    App.init({
-        postId: "abrox-binary-001", // unique per post
-        postTitle: "🔥 Abrox Bot Binary Signals – 95% Accuracy"
-    });
+    setTimeout(() => {
+        bootCommunity();
+    }, 800);
 });
