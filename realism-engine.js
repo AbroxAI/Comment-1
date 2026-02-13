@@ -1,116 +1,64 @@
 // realism-engine.js
 // ============================================================
-// TELEGRAM-LIKE REALISM ENGINE
+// REALISM ENGINE v2
+// Generates live synthetic comments for bubble-renderer.js
 // Works with identity-personas.js & bubble-renderer.js
-// Handles typing simulation, last-seen updates, emoji reactions
-// Adds human-like delays and realism cues
 // ============================================================
 
-// ================= TYPING SIMULATION =================
-const TypingQueue = new Map(); // personaName -> timeoutId
+const realismConfig = {
+    minInterval: 2000, // min 2s between comments
+    maxInterval: 8000, // max 8s
+    trendingProbability: 0.3, // chance a comment triggers replies
+    maxReplies: 5
+};
 
-function simulateTyping(persona, baseText, callback) {
-    if (!persona) return;
-    const words = baseText.split(" ");
-    let idx = 0;
+let realismActive = true;
 
-    function typeNext() {
-        if (idx < words.length) {
-            idx++;
-            const delay = 150 + Math.random() * 150; // 150-300ms per word
-            TypingQueue.set(persona.name, setTimeout(typeNext, delay));
-        } else {
-            TypingQueue.delete(persona.name);
-            if (callback) callback();
+// ================= RANDOM DELAY HELPER =================
+function randomDelay() {
+    return realismConfig.minInterval + Math.random() * (realismConfig.maxInterval - realismConfig.minInterval);
+}
+
+// ================= GENERATE LIVE COMMENT =================
+function generateLiveComment(baseText = null) {
+    if (!realismActive) return;
+
+    const persona = getRandomPersona();
+    const text = baseText || generateHumanComment(persona, "Yo this looks solid!");
+    const timestamp = generateTimestamp();
+
+    // Render the comment bubble
+    renderBubble(persona, text, timestamp);
+
+    // Possibly trigger trending replies
+    if (Math.random() < realismConfig.trendingProbability) {
+        const replyCount = Math.floor(Math.random() * realismConfig.maxReplies) + 1;
+        for (let i = 0; i < replyCount; i++) {
+            setTimeout(() => {
+                const replyPersona = getRandomPersona();
+                const replyText = generateHumanComment(replyPersona, "Agreed!");
+                renderBubble(replyPersona, replyText, generateTimestamp());
+            }, 300 + Math.random() * 1000);
         }
     }
 
-    typeNext();
+    // Schedule next comment
+    setTimeout(() => generateLiveComment(), randomDelay());
 }
 
-// ================= LAST SEEN DYNAMICS =================
-function updateLastSeen(persona) {
-    if (!persona) return;
-    const now = Date.now();
-    // Randomly move lastSeen forward a bit
-    const variance = 1000 * (30 + Math.random() * 300); // 30-330 sec
-    persona.lastSeen = now - variance;
-}
-
-// Auto-update last seen for all personas
-function autoUpdateLastSeen() {
-    SyntheticPool.forEach(p => {
-        if (maybe(0.02)) updateLastSeen(p); // small chance per tick
-    });
-    setTimeout(autoUpdateLastSeen, 5000);
-}
-
-// ================= EMOJI / REALISM REACTIONS =================
-function addEmojiReaction(persona, bubbleEl) {
-    if (!bubbleEl || !persona) return;
-    if (maybe(0.3)) {
-        const emoji = random(EMOJIS);
-        const span = document.createElement("span");
-        span.className = "tg-bubble-emoji";
-        span.textContent = emoji;
-        span.style.marginLeft = "4px";
-        bubbleEl.appendChild(span);
+// ================= START / STOP REALISM =================
+function startRealism() { 
+    if (!realismActive) {
+        realismActive = true;
+        generateLiveComment();
     }
 }
-
-// ================= HUMAN-LIKE DELAY =================
-function humanDelay(min=300, max=1200) {
-    return min + Math.random() * (max - min);
-}
-
-// ================= REALISM TICK =================
-function realismTick() {
-    SyntheticPool.forEach(p => {
-        // Occasionally simulate typing for trending posts
-        if (maybe(0.005)) {
-            const trendingText = "🔥 Hot market move!";
-            simulateTyping(p, trendingText, () => {
-                // Once typing completes, push comment to bubble renderer
-                if (typeof renderBubble === "function") {
-                    const comment = generateHumanComment(p, trendingText);
-                    renderBubble(p, comment);
-                }
-            });
-        }
-
-        // Small chance to update last seen dynamically
-        if (maybe(0.02)) updateLastSeen(p);
-    });
-
-    setTimeout(realismTick, 3000);
-}
+function stopRealism() { realismActive = false; }
 
 // ================= EXPORTS =================
-function startRealismEngine() {
-    autoUpdateLastSeen();
-    realismTick();
-}
+window.startRealism = startRealism;
+window.stopRealism = stopRealism;
+window.generateLiveComment = generateLiveComment;
 
-function stopRealismEngine() {
-    // Clear all typing timeouts
-    TypingQueue.forEach(id => clearTimeout(id));
-    TypingQueue.clear();
-}
-
-// Optional helper for UI to display "typing..." indicator
-function showTypingIndicator(persona, containerEl) {
-    if (!containerEl) return;
-    let indicator = containerEl.querySelector(`.tg-typing-${persona.name}`);
-    if (!indicator) {
-        indicator = document.createElement("div");
-        indicator.className = `tg-bubble tg-bubble-typing tg-typing-${persona.name}`;
-        indicator.textContent = "typing...";
-        indicator.style.opacity = "0.5";
-        containerEl.appendChild(indicator);
-    }
-
-    // Remove after short random time
-    setTimeout(() => {
-        if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
-    }, 1000 + Math.random() * 2000);
-}
+// ================= AUTO START =================
+startRealism();
