@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abrox Comments Widget</title>
-    <link rel="stylesheet" href="widget.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abrox Comments Widget</title>
+
+<!-- CSS -->
+<link rel="stylesheet" href="widget.css">
+
 </head>
 <body>
 
@@ -20,20 +23,22 @@
             <i data-lucide="arrow-left"></i>
         </button>
 
-        <!-- Comment Count -->
-        <span class="tg-comment-count" id="tg-comment-count">0 comments</span>
+        <!-- Bold Comment Count -->
+        <span class="tg-comment-count" id="tg-comment-count"><strong>0 comments</strong></span>
+    </div>
 
-        <!-- Post Title / Discussion -->
-        <div class="tg-title" id="tg-post-title">Loading...</div>
+    <!-- Post Preview (Telegram-style system message) -->
+    <div id="tg-post-preview" class="tg-post-preview">
+        Loading post...
     </div>
 
     <!-- Scrollable Comments Container -->
     <div id="tg-comments-container"></div>
 
-    <!-- New Comments Indicator -->
+    <!-- New Comments Notification -->
     <div id="tg-new-comments" class="hidden">↓ New comments</div>
 
-    <!-- Floating Input Bar -->
+    <!-- Telegram-style Floating Input Bar -->
     <div class="tg-input-wrapper">
         <div class="tg-input-bar">
             <!-- Left: Emoji -->
@@ -49,7 +54,7 @@
                 <i data-lucide="send"></i>
             </button>
 
-            <!-- Right: Media / Camera -->
+            <!-- Right: Media / Camera Buttons -->
             <div class="tg-right-buttons">
                 <button class="tg-icon-btn" data-type="media" aria-label="Upload media">
                     <i data-lucide="camera"></i>
@@ -65,9 +70,7 @@
 
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
-<script>
-    lucide.createIcons();
-</script>
+<script>lucide.createIcons();</script>
 
 <!-- Modular Scripts -->
 <script src="personas.js"></script>
