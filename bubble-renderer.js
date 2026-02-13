@@ -1,16 +1,17 @@
-// ================= BUBBLE RENDERER =================
-// Handles rendering persona comments into the Telegram-style widget
+// bubble-renderer.js
+// ============================================================
+// COMMENT BUBBLE RENDERER
+// Works with identity-personas.js & interactions.js
+// Renders Telegram-style bubbles for admin & synthetic personas
+// ============================================================
 
 const commentsContainer = document.getElementById("tg-comments-container");
-const commentCountEl = document.getElementById("tg-comment-count");
-const newCommentsNotification = document.getElementById("tg-new-comments");
 
-let totalComments = 0;
+// ================= RENDER SINGLE BUBBLE =================
+function renderBubble(persona, text, timestamp = Date.now()) {
+    if (!persona || !text) return;
 
-// ------------------------------
-// Create a single comment bubble
-// ------------------------------
-function renderCommentBubble(persona, text, isAdmin = false) {
+    // Create comment container
     const commentEl = document.createElement("div");
     commentEl.classList.add("tg-comment");
 
@@ -20,109 +21,54 @@ function renderCommentBubble(persona, text, isAdmin = false) {
     avatarEl.src = persona.avatar;
     avatarEl.alt = persona.name;
 
-    // Bubble
+    // Bubble container
     const bubbleEl = document.createElement("div");
     bubbleEl.classList.add("tg-bubble");
-    if(isAdmin) bubbleEl.classList.add("admin");
+    if (persona.isAdmin) bubbleEl.classList.add("admin");
 
-    // Name
+    // Bubble name
     const nameEl = document.createElement("div");
     nameEl.classList.add("tg-bubble-name");
     nameEl.textContent = persona.name;
 
-    // Message
-    const msgEl = document.createElement("div");
-    msgEl.classList.add("tg-bubble-msg");
-    msgEl.textContent = text;
+    // Bubble text
+    const textEl = document.createElement("div");
+    textEl.classList.add("tg-bubble-text");
+    textEl.textContent = text;
 
+    // Append
     bubbleEl.appendChild(nameEl);
-    bubbleEl.appendChild(msgEl);
+    bubbleEl.appendChild(textEl);
     commentEl.appendChild(avatarEl);
     commentEl.appendChild(bubbleEl);
 
-    // Append to container
+    // Insert at bottom
     commentsContainer.appendChild(commentEl);
-    commentsContainer.scrollTop = commentsContainer.scrollHeight;
 
-    // Update total count
-    totalComments++;
-    commentCountEl.innerHTML = `<strong>${totalComments} comments</strong>`;
+    // Animate in
+    setTimeout(() => commentEl.style.opacity = 1, 10);
 
-    return commentEl;
+    // Notify new comment if user not at bottom
+    if (typeof notifyNewComment === "function") notifyNewComment();
 }
 
-// ------------------------------
-// Render batch of comments
-// ------------------------------
-function renderCommentsBatch(comments) {
-    comments.forEach(c => renderCommentBubble(c.persona, c.text, c.persona.isAdmin));
-}
-
-// ------------------------------
-// Generate a synthetic comment from personas engine
-// ------------------------------
-function generateAndRenderComment(baseText="Nice setup!", targetName=null) {
-    const persona = getRandomPersona();
-    const text = generateHumanComment(persona, baseText, targetName);
-
-    if(!isDuplicate("post-1", text)) {
-        renderCommentBubble(persona, text, persona.isAdmin);
-    }
-}
-
-// ------------------------------
-// Admin message renderer
-// ------------------------------
-function renderAdminMessage(text) {
-    renderCommentBubble(Admin, text, true);
-}
-
-// ------------------------------
-// Simulate trending reactions
-// ------------------------------
-function simulateTrending(baseText="This is hot!") {
-    const reactions = simulateCrowdReaction(baseText);
-    reactions.forEach(text => {
-        const persona = getRandomPersona();
-        renderCommentBubble(persona, text, persona.isAdmin);
+// ================= RENDER MULTIPLE BUBBLES =================
+function renderMultipleBubbles(bubbleArray) {
+    bubbleArray.forEach(b => {
+        renderBubble(b.persona, b.text, b.timestamp);
     });
 }
 
-// ------------------------------
-// New comments notification
-// ------------------------------
-function showNewCommentsNotification() {
-    newCommentsNotification.classList.remove("hidden");
-    newCommentsNotification.onclick = () => {
-        commentsContainer.scrollTop = commentsContainer.scrollHeight;
-        newCommentsNotification.classList.add("hidden");
-    };
+// ================= SIMULATE HUMAN COMMENT =================
+function simulateHumanComment(baseText = null) {
+    const persona = getRandomPersona();
+    const text = baseText || generateHumanComment(persona, "This is lit!");
+    const timestamp = generateTimestamp();
+
+    renderBubble(persona, text, timestamp);
 }
 
-// ------------------------------
-// Auto-generate comments periodically
-// ------------------------------
-function startAutoComments(interval=6000) {
-    setInterval(() => {
-        generateAndRenderComment(random([
-            "Looking good!", 
-            "I'm bullish on this 🚀", 
-            "Interesting move", 
-            "Check volume here", 
-            "Solid setup"
-        ]));
-    }, interval);
-}
-
-// ------------------------------
-// Export functions
-// ------------------------------
-window.BubbleRenderer = {
-    renderCommentBubble,
-    renderCommentsBatch,
-    generateAndRenderComment,
-    renderAdminMessage,
-    simulateTrending,
-    startAutoComments,
-    showNewCommentsNotification
-};
+// ================= EXPORTS =================
+window.renderBubble = renderBubble;
+window.renderMultipleBubbles = renderMultipleBubbles;
+window.simulateHumanComment = simulateHumanComment;
