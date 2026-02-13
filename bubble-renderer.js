@@ -1,74 +1,77 @@
 // bubble-renderer.js
 // ============================================================
-// COMMENT BUBBLE RENDERER
-// Works with identity-personas.js & interactions.js
-// Renders Telegram-style bubbles for admin & synthetic personas
+// BUBBLE RENDERER
+// Renders comment bubbles for admin, user, and synthetic personas
+// Syncs with identity-personas.js & interactions.js
 // ============================================================
 
-const commentsContainer = document.getElementById("tg-comments-container");
+const tgCommentsContainer = document.getElementById("tg-comments-container");
 
-// ================= RENDER SINGLE BUBBLE =================
-function renderBubble(persona, text, timestamp = Date.now()) {
-    if (!persona || !text) return;
-
-    // Create comment container
-    const commentEl = document.createElement("div");
-    commentEl.classList.add("tg-comment");
+/**
+ * Renders a comment bubble
+ * @param {Object} persona - persona object {name, avatar, isAdmin, ...}
+ * @param {string} text - comment text
+ * @param {Date} timestamp - comment timestamp
+ * @param {boolean} isUser - true if from current user
+ */
+function renderBubble(persona, text, timestamp = new Date(), isUser = false) {
+    const commentWrapper = document.createElement("div");
+    commentWrapper.classList.add("tg-comment");
 
     // Avatar
-    const avatarEl = document.createElement("img");
-    avatarEl.classList.add("tg-comment-avatar");
-    avatarEl.src = persona.avatar;
-    avatarEl.alt = persona.name;
+    const avatarImg = document.createElement("img");
+    avatarImg.src = persona.avatar || "assets/default-avatar.jpg";
+    avatarImg.alt = persona.name;
+    avatarImg.classList.add("tg-comment-avatar");
 
-    // Bubble container
-    const bubbleEl = document.createElement("div");
-    bubbleEl.classList.add("tg-bubble");
-    if (persona.isAdmin) bubbleEl.classList.add("admin");
+    // Bubble
+    const bubble = document.createElement("div");
+    bubble.classList.add("tg-bubble");
+    if (persona.isAdmin) bubble.classList.add("admin");
+    if (isUser) bubble.classList.add("admin"); // user bubble styled like admin
 
-    // Bubble name
-    const nameEl = document.createElement("div");
-    nameEl.classList.add("tg-bubble-name");
-    nameEl.textContent = persona.name;
+    // Name
+    const nameSpan = document.createElement("div");
+    nameSpan.classList.add("tg-bubble-name");
+    nameSpan.textContent = persona.name;
 
-    // Bubble text
-    const textEl = document.createElement("div");
-    textEl.classList.add("tg-bubble-text");
-    textEl.textContent = text;
+    // Text
+    const textSpan = document.createElement("div");
+    textSpan.classList.add("tg-bubble-text");
+    textSpan.textContent = text;
 
-    // Append
-    bubbleEl.appendChild(nameEl);
-    bubbleEl.appendChild(textEl);
-    commentEl.appendChild(avatarEl);
-    commentEl.appendChild(bubbleEl);
+    // Timestamp
+    const timeSpan = document.createElement("div");
+    timeSpan.classList.add("tg-bubble-time");
+    timeSpan.textContent = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Insert at bottom
-    commentsContainer.appendChild(commentEl);
+    bubble.appendChild(nameSpan);
+    bubble.appendChild(textSpan);
+    bubble.appendChild(timeSpan);
+
+    if (isUser) {
+        commentWrapper.style.flexDirection = "row-reverse";
+    }
+
+    commentWrapper.appendChild(avatarImg);
+    commentWrapper.appendChild(bubble);
+
+    tgCommentsContainer.appendChild(commentWrapper);
 
     // Animate in
-    setTimeout(() => commentEl.style.opacity = 1, 10);
-
-    // Notify new comment if user not at bottom
-    if (typeof notifyNewComment === "function") notifyNewComment();
+    setTimeout(() => {
+        commentWrapper.style.opacity = 1;
+        commentWrapper.style.transform = "translateY(0)";
+    }, 50);
 }
 
-// ================= RENDER MULTIPLE BUBBLES =================
-function renderMultipleBubbles(bubbleArray) {
-    bubbleArray.forEach(b => {
-        renderBubble(b.persona, b.text, b.timestamp);
-    });
-}
-
-// ================= SIMULATE HUMAN COMMENT =================
-function simulateHumanComment(baseText = null) {
+/**
+ * Generates a synthetic persona comment
+ * Optionally used by realism engine
+ */
+function generateLiveComment(baseText = "Interesting move") {
     const persona = getRandomPersona();
-    const text = baseText || generateHumanComment(persona, "This is lit!");
+    const text = generateHumanComment(persona, baseText);
     const timestamp = generateTimestamp();
-
-    renderBubble(persona, text, timestamp);
+    renderBubble(persona, text, timestamp, false);
 }
-
-// ================= EXPORTS =================
-window.renderBubble = renderBubble;
-window.renderMultipleBubbles = renderMultipleBubbles;
-window.simulateHumanComment = simulateHumanComment;
