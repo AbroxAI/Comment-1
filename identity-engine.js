@@ -1,32 +1,47 @@
 // identity-engine.js
 // -----------------------------
-// Manages personas for posts and admin identity
+// Manages synthetic personas + per-post uniqueness
 // -----------------------------
 
 const IdentityEngine = (() => {
 
-    // Store personas per postId to avoid duplicates
-    const posts = {};
+    const postsData = {}; // stores used personas per post
 
-    // Get a persona (admin or synthetic) for a post
-    function getPersona(postId, type = "synthetic") {
+    const TOTAL_PERSONAS = 1000;
+    const AVATAR_SOURCES = [
+        "https://i.pravatar.cc/150?img=",
+        "https://api.dicebear.com/6.x/avataaars/svg?seed=",
+        "https://api.multiavatar.com/"
+    ];
 
-        if (!posts[postId]) {
-            posts[postId] = {
-                usedPersonas: new Set()
-            };
-        }
+    function generateSyntheticPersona(id) {
+        const names = ["alex", "maria", "john", "lily", "max", "zoe", "leo", "emma", "sam", "ava"];
+        const suffixes = ["", " 💸", " 🌟", "🔥", "💯", "✨", "💀", "😎"];
+        const name = names[Math.floor(Math.random() * names.length)] +
+                     suffixes[Math.floor(Math.random() * suffixes.length)];
+        const avatarSource = AVATAR_SOURCES[Math.floor(Math.random() * AVATAR_SOURCES.length)];
+        const avatar = avatarSource + Math.floor(Math.random() * 100);
 
-        const used = posts[postId].usedPersonas;
-
-        if (type === "admin") return Personas.admin;
-
-        return Personas.generateSyntheticPersona(postId, used);
+        return { name, avatar, isAdmin: false };
     }
 
-    return {
-        getPersona,
-        posts
-    };
+    // Ensure per-post unique synthetic persona
+    function getPersona(postId, type = "synthetic") {
+        if (!postsData[postId]) postsData[postId] = new Set();
+
+        if (type === "admin") {
+            return Personas.admin;
+        }
+
+        let persona;
+        do {
+            persona = generateSyntheticPersona();
+        } while (postsData[postId].has(persona.name));
+
+        postsData[postId].add(persona.name);
+        return persona;
+    }
+
+    return { getPersona };
 
 })();
