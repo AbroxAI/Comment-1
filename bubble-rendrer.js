@@ -1,55 +1,59 @@
 // bubble-renderer.js
-// -----------------------------
-// Renders Telegram-style comment bubbles
-// Supports threaded replies for admin
-// -----------------------------
+// ----------------------------------
+// Responsible for rendering Telegram-style comment bubbles
+// ----------------------------------
 
 const BubbleRenderer = (() => {
 
     /**
      * Render a comment bubble
-     * @param {Object} persona - persona object
-     * @param {String} text - comment content
-     * @param {HTMLElement} container - where to append
-     * @param {Object} options - optional { reply: true/false }
+     * @param {Object} persona - from identity-engine.js
+     * @param {String} text - message content
+     * @param {HTMLElement} container - comments container
      */
-    function render(persona, text, container, options = {}) {
-        if (!container) return;
+    function render(persona, text, container) {
+        if (!container || !persona || !text) return;
 
         const commentEl = document.createElement("div");
         commentEl.className = "tg-comment";
 
-        let bubbleClass = persona.isAdmin ? "tg-bubble admin" : "tg-bubble";
-
+        // Bubble HTML
         commentEl.innerHTML = `
-            <img class="tg-comment-avatar" src="${persona.avatar}" alt="${persona.name}">
-            <div class="${bubbleClass}">
+            <img 
+                class="tg-comment-avatar" 
+                src="${persona.avatar}" 
+                alt="${persona.name}" 
+            />
+            <div class="tg-bubble ${persona.isAdmin ? 'admin' : ''}">
                 <div class="tg-bubble-name">${persona.name}</div>
                 <div class="tg-bubble-text">${escapeHTML(text)}</div>
             </div>
         `;
 
-        // If this is a reply, add a left border or small offset
-        if (options.reply) {
-            commentEl.style.marginLeft = "48px";
-        }
-
         container.appendChild(commentEl);
 
-        // Smooth scroll
-        commentEl.scrollIntoView({ behavior: "smooth", block: "end" });
+        // Scroll smoothly to bottom
+        commentEl.scrollIntoView({
+            behavior: "smooth",
+            block: "end"
+        });
     }
 
     /**
-     * Escape HTML for safety
+     * Escape HTML to prevent XSS
      */
     function escapeHTML(str) {
+        if (!str) return "";
         return str
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
-    return { render };
+    return {
+        render
+    };
 
 })();
